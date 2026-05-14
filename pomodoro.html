@@ -225,14 +225,14 @@
   <div id="root"></div>
   <script>
     const PHASE_DURATIONS = { focus: 25 * 60, shortBreak: 5 * 60, longBreak: 15 * 60 };
-    const PHASE_LABELS = { focus: '专注', shortBreak: '短休息', longBreak: '长休息' };
+    const PHASE_LABELS = { focus: '学习时间', shortBreak: '短休息', longBreak: '长休息' };
 
     let state = {
       phase: 'focus',
       timeLeft: PHASE_DURATIONS.focus,
       isRunning: false,
       pomodorosCompleted: 0,
-      settings: { focus: 25, shortBreak: 5, longBreak: 15 },
+      settings: { focus: 25, shortBreak: 5, longBreak: 25 },
       soundEnabled: true
     };
 
@@ -246,7 +246,7 @@
       document.getElementById('root').innerHTML = `
         <div class="timer-card">
           <div class="header">
-            <h1 class="title">番茄钟</h1>
+            <h1 class="title">学习计时器</h1>
             <div class="pomodoro-count">
               <span class="label">完成番茄</span>
               <span class="count">${state.pomodorosCompleted}</span>
@@ -273,7 +273,7 @@
           <div class="settings">
             <div class="settings-title">设置</div>
             <div class="setting-row">
-              <label>专注时长 (分钟)</label>
+              <label>学习时长 (分钟)</label>
               <input type="number" min="1" max="60" value="${state.settings.focus}"
                 onchange="updateSetting('focus', this.value)">
             </div>
@@ -329,11 +329,11 @@
       if (!('Notification' in window)) return;
       if (Notification.permission === 'granted') {
         const messages = {
-          focus: '专注时间结束！休息一下吧',
+          focus: '学习时间结束！休息一下吧',
           shortBreak: '短休息结束！继续专注',
-          longBreak: '长休息结束！开始新的番茄'
+          longBreak: '长休息结束！开始新的学习',
         };
-        new Notification('番茄钟', { body: messages[phase] });
+        new Notification('学习计时器', { body: messages[phase] });
       }
     }
 
