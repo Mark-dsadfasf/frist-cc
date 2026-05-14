@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>番茄钟</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: Inter, system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      background: linear-gradient(135deg, #1a0a0a 0%, #0a1a0a 100%);
+      color: #fff;
+    }
+    #root {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1rem;
+    }
+    .timer-card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 24px;
+      padding: 2.5rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    .title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .pomodoro-count {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+    .pomodoro-count .label {
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.6);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .pomodoro-count .count {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #48c774;
+    }
+    .phase-indicator {
+      padding: 0.5rem 1rem;
+      border-radius: 12px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 2rem;
+      transition: all 0.3s ease;
+    }
+    .phase-indicator.focus {
+      background-color: rgba(255, 107, 107, 0.2);
+      color: #ff6b6b;
+    }
+    .phase-indicator.shortBreak {
+      background-color: rgba(72, 199, 116, 0.2);
+      color: #48c774;
+    }
+    .phase-indicator.longBreak {
+      background-color: rgba(50, 180, 80, 0.2);
+      color: #32b450;
+    }
+    .timer-display {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+    .progress-ring {
+      width: 220px;
+      height: 220px;
+    }
+    .progress-ring-bg {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.1);
+      stroke-width: 8;
+    }
+    .progress-ring-fill {
+      fill: none;
+      stroke: #ff6b6b;
+      stroke-width: 8;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 0.5s ease;
+      transform: rotate(-90deg);
+      transform-origin: center;
+    }
+    .time-text {
+      position: absolute;
+      font-size: 3.5rem;
+      font-weight: 700;
+      color: #fff;
+      font-variant-numeric: tabular-nums;
+    }
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+    }
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+      color: #fff;
+      min-width: 100px;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
+    }
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+    }
+    .btn-secondary:active {
+      transform: translateY(0);
+    }
+    .settings {
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .settings-title {
+      font-size: 0.875rem;
+      color: rgba(255, 255, 255, 0.6);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 1rem;
+    }
+    .setting-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+    .setting-row label {
+      font-size: 0.875rem;
+      color: rgba(255, 255, 255, 0.8);
+    }
+    .setting-row input {
+      width: 70px;
+      padding: 0.4rem 0.6rem;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      font-size: 0.875rem;
+      text-align: center;
+    }
+    .setting-row input:focus {
+      outline: none;
+      border-color: #ff6b6b;
+    }
+    .sound-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .sound-toggle input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: #ff6b6b;
+    }
+    @media (max-width: 480px) {
+      .timer-card {
+        padding: 1.5rem;
+      }
+      .time-text {
+        font-size: 2.5rem;
+      }
+      .progress-ring {
+        width: 180px;
+        height: 180px;
+      }
+      .controls {
+        flex-wrap: wrap;
+      }
+      .btn {
+        padding: 0.6rem 1rem;
+        font-size: 0.875rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script>
+    const PHASE_DURATIONS = { focus: 25 * 60, shortBreak: 5 * 60, longBreak: 15 * 60 };
+    const PHASE_LABELS = { focus: '专注', shortBreak: '短休息', longBreak: '长休息' };
+
+    let state = {
+      phase: 'focus',
+      timeLeft: PHASE_DURATIONS.focus,
+      isRunning: false,
+      pomodorosCompleted: 0,
+      settings: { focus: 25, shortBreak: 5, longBreak: 15 },
+      soundEnabled: true
+    };
+
+    let interval = null;
+
+    function render() {
+      const progress = ((PHASE_DURATIONS[state.phase] - state.timeLeft) / PHASE_DURATIONS[state.phase]) * 100;
+      const circumference = 2 * Math.PI * 90;
+      const offset = circumference * (1 - progress / 100);
+
+      document.getElementById('root').innerHTML = `
+        <div class="timer-card">
+          <div class="header">
+            <h1 class="title">番茄钟</h1>
+            <div class="pomodoro-count">
+              <span class="label">完成番茄</span>
+              <span class="count">${state.pomodorosCompleted}</span>
+            </div>
+          </div>
+
+          <div class="phase-indicator ${state.phase}">${PHASE_LABELS[state.phase]}</div>
+
+          <div class="timer-display">
+            <svg class="progress-ring" viewBox="0 0 200 200">
+              <circle class="progress-ring-bg" cx="100" cy="100" r="90"/>
+              <circle class="progress-ring-fill" cx="100" cy="100" r="90"
+                stroke-dasharray="${circumference}" stroke-dashoffset="${offset}"/>
+            </svg>
+            <div class="time-text">${formatTime(state.timeLeft)}</div>
+          </div>
+
+          <div class="controls">
+            <button class="btn btn-secondary" onclick="handleReset()">重置</button>
+            <button class="btn btn-primary" onclick="handleStartPause()">${state.isRunning ? '暂停' : '开始'}</button>
+            <button class="btn btn-secondary" onclick="handleSkip()">跳过</button>
+          </div>
+
+          <div class="settings">
+            <div class="settings-title">设置</div>
+            <div class="setting-row">
+              <label>专注时长 (分钟)</label>
+              <input type="number" min="1" max="60" value="${state.settings.focus}"
+                onchange="updateSetting('focus', this.value)">
+            </div>
+            <div class="setting-row">
+              <label>短休息 (分钟)</label>
+              <input type="number" min="1" max="30" value="${state.settings.shortBreak}"
+                onchange="updateSetting('shortBreak', this.value)">
+            </div>
+            <div class="setting-row">
+              <label>长休息 (分钟)</label>
+              <input type="number" min="1" max="60" value="${state.settings.longBreak}"
+                onchange="updateSetting('longBreak', this.value)">
+            </div>
+            <div class="setting-row sound-toggle">
+              <label>启用提示音</label>
+              <input type="checkbox" ${state.soundEnabled ? 'checked' : ''}
+                onchange="state.soundEnabled = this.checked">
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function getNextPhase() {
+      if (state.phase === 'focus') {
+        return (state.pomodorosCompleted + 1) % 4 === 0 ? 'longBreak' : 'shortBreak';
+      }
+      return 'focus';
+    }
+
+    function playSound() {
+      if (!state.soundEnabled) return;
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      oscillator.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      oscillator.frequency.value = 800;
+      oscillator.type = 'sine';
+      gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+      oscillator.start(ctx.currentTime);
+      oscillator.stop(ctx.currentTime + 0.5);
+    }
+
+    function sendNotification(phase) {
+      if (!('Notification' in window)) return;
+      if (Notification.permission === 'granted') {
+        const messages = {
+          focus: '专注时间结束！休息一下吧',
+          shortBreak: '短休息结束！继续专注',
+          longBreak: '长休息结束！开始新的番茄'
+        };
+        new Notification('番茄钟', { body: messages[phase] });
+      }
+    }
+
+    function tick() {
+      if (state.timeLeft <= 1) {
+        clearInterval(interval);
+        interval = null;
+        playSound();
+        sendNotification(state.phase);
+        const nextPhase = getNextPhase();
+        state.pomodorosCompleted = state.phase === 'focus' ? state.pomodorosCompleted + 1 : state.pomodorosCompleted;
+        state.phase = nextPhase;
+        state.timeLeft = PHASE_DURATIONS[nextPhase];
+        state.isRunning = false;
+        render();
+        return;
+      }
+      state.timeLeft--;
+      render();
+    }
+
+    function handleStartPause() {
+      if (state.isRunning) {
+        clearInterval(interval);
+        interval = null;
+        state.isRunning = false;
+      } else {
+        state.isRunning = true;
+        interval = setInterval(tick, 1000);
+      }
+      render();
+    }
+
+    function handleReset() {
+      if (interval) {
+        clearInterval(interval);
+        interval = null;
+      }
+      state.isRunning = false;
+      state.timeLeft = PHASE_DURATIONS[state.phase];
+      render();
+    }
+
+    function handleSkip() {
+      if (interval) {
+        clearInterval(interval);
+        interval = null;
+      }
+      state.pomodorosCompleted = state.phase === 'focus' ? state.pomodorosCompleted + 1 : state.pomodorosCompleted;
+      state.phase = getNextPhase();
+      state.timeLeft = PHASE_DURATIONS[state.phase];
+      state.isRunning = false;
+      render();
+    }
+
+    function updateSetting(key, value) {
+      const mins = parseInt(value) || 1;
+      state.settings[key] = Math.min(60, Math.max(1, mins));
+      PHASE_DURATIONS[key] = state.settings[key] * 60;
+      if (state.phase === key && !state.isRunning) {
+        state.timeLeft = PHASE_DURATIONS[key];
+      }
+      render();
+    }
+
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+
+    render();
+  </script>
+</body>
+</html>
